@@ -1,0 +1,61 @@
+version: '3'
+
+services:
+  ctfd:
+    container_name: ctfd
+    image: ctfd/ctfd:1.2.0
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - UPLOAD_FOLDER=/var/uploads
+      - LOG_FOLDER=/var/log/CTFd
+      - DATABASE_URL=mysql+pymysql://root:ctfd@db/ctfd
+      - REDIS_URL=redis://cache:6379
+      - WORKERS=1
+    volumes:
+      - .data/CTFd/logs:/var/log/CTFd
+      - .data/CTFd/uploads:/var/uploads
+      - .data/CTFd/imports:/var/imports
+    depends_on:
+      - db
+    networks:
+        default:
+        internal:
+
+  db:
+    container_name: database
+    image: mariadb:10.2
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=ctfd
+      - MYSQL_USER=ctfd
+      - MYSQL_PASSWORD=ctfd
+    networks:
+        internal:
+
+  cache:
+    container_name: cache
+    image: redis:4
+    restart: always
+    volumes:
+        - .data/redis:/data
+    networks:
+        internal:
+        
+  juice-shop-ctf:
+    container_name: juice-shop
+    image: bkimminich/juice-shop
+    restart: always
+    environment:
+      - NODE_ENV=ctf
+      - CTF_KEY=TFM
+    ports:
+      - "3000:3000"
+    networks:
+      default:
+    
+networks:
+    default:
+    internal:
+        internal: true
